@@ -3,7 +3,8 @@ package io.github.nomisrev.routes
 import arrow.core.Either
 import arrow.core.raise.either
 import io.github.nomisrev.IncorrectJson
-import io.github.nomisrev.auth.jwtAuth
+import io.github.nomisrev.auth.authGet
+import io.github.nomisrev.auth.authPut
 import io.github.nomisrev.service.JwtService
 import io.github.nomisrev.service.Login
 import io.github.nomisrev.service.RegisterUser
@@ -14,7 +15,6 @@ import io.ktor.resources.Resource
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get
 import io.ktor.server.resources.post
-import io.ktor.server.resources.put
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -71,28 +71,23 @@ fun Route.userRoutes(userService: UserService, jwtService: JwtService) {
       .respond(HttpStatusCode.OK)
   }
   /* Get Current User: GET /api/user */
-  get<UserResource> {
-    jwtAuth(jwtService) { (token, userId) ->
-      either {
-          val info = userService.getUser(userId).bind()
-          UserWrapper(User(info.email, token.value, info.username, info.bio, info.image))
-        }
-        .respond(HttpStatusCode.OK)
-    }
+  authGet<UserResource>(jwtService) { _, (token, userId) ->
+    either {
+        val info = userService.getUser(userId).bind()
+        UserWrapper(User(info.email, token.value, info.username, info.bio, info.image))
+      }
+      .respond(HttpStatusCode.OK)
   }
 
   /* Update current user: PUT /api/user */
-  put<UserResource> {
-    jwtAuth(jwtService) { (token, userId) ->
-      either {
-          val (email, username, password, bio, image) =
-            receiveCatching<UserWrapper<UpdateUser>>().bind().user
-          val info =
-            userService.update(Update(userId, username, email, password, bio, image)).bind()
-          UserWrapper(User(info.email, token.value, info.username, info.bio, info.image))
-        }
-        .respond(HttpStatusCode.OK)
-    }
+  authPut<UserResource>(jwtService) { _, (token, userId) ->
+    either {
+        val (email, username, password, bio, image) =
+          receiveCatching<UserWrapper<UpdateUser>>().bind().user
+        val info = userService.update(Update(userId, username, email, password, bio, image)).bind()
+        UserWrapper(User(info.email, token.value, info.username, info.bio, info.image))
+      }
+      .respond(HttpStatusCode.OK)
   }
 }
 

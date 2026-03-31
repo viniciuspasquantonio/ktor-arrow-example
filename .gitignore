@@ -169,4 +169,6 @@ gradle-wrapper.jar
 **/build/
 
 kotlin-js-store
-*.hprof
+*.hprof.worktrees/
+
+.worktrees/

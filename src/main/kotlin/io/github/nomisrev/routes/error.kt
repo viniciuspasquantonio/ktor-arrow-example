@@ -48,7 +48,7 @@ suspend fun RoutingContext.respond(error: DomainError): Unit =
     is JwtGeneration -> unprocessable(error.description)
     is UserNotFound -> unprocessable("User with ${error.property} not found")
     is UsernameAlreadyExists -> unprocessable("Username ${error.username} already exists")
-    is JwtInvalid -> unprocessable(error.description)
+    is JwtInvalid -> call.respond(HttpStatusCode.Unauthorized)
     is CannotGenerateSlug -> unprocessable(error.description)
     is ArticleBySlugNotFound -> unprocessable("Article by slug ${error.slug} not found")
     is MissingParameter -> unprocessable("Missing ${error.name} parameter in request")
