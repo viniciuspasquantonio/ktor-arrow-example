@@ -53,6 +53,9 @@ interface ArticleService {
   /** Get article by Slug */
   suspend fun getArticleBySlug(slug: Slug): Either<DomainError, Article>
 
+  /** Get article by ID */
+  suspend fun getArticleById(id: ArticleId): Either<DomainError, Article>
+
   /** Update an article and return the updated Article */
   suspend fun updateArticle(input: UpdateArticleInput): Either<DomainError, Article>
 
@@ -159,6 +162,11 @@ fun articleService(
     override suspend fun getArticleBySlug(slug: Slug): Either<DomainError, Article> = either {
       val article = articlePersistence.findArticleBySlug(slug).bind()
       // TODO: optional auth route check if user favorited
+      article(article, false)
+    }
+
+    override suspend fun getArticleById(id: ArticleId): Either<DomainError, Article> = either {
+      val article = articlePersistence.findArticleById(id).bind()
       article(article, false)
     }
 
