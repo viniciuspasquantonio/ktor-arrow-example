@@ -66,3 +66,32 @@ class ListMyBookmarkedArticlesUseCase(
     )
   }
 }
+
+class ListArticlesBookmarkedByUseCase(
+  private val bookmarkRepository: BookmarkRepository,
+  private val articleAcl: ArticleAcl,
+  private val userAcl: UserAcl,
+) : ListArticlesBookmarkedBy {
+  override suspend fun invoke(
+    username: String,
+    actorUserId: Long?,
+    limit: Int,
+    offset: Int
+  ): Either<DomainError, ArticlesPageView> = either {
+    val bookmarkUserId = userAcl.userIdByUsername(username).bind()
+    
+    val articleIds = bookmarkRepository.listArticleIdsByUser(bookmarkUserId, limit, offset)
+    val totalCount = bookmarkRepository.countByUser(bookmarkUserId).toInt()
+    
+    val articles = if (articleIds.isEmpty()) {
+      emptyList()
+    } else {
+      articleAcl.listArticlesByIds(articleIds, actorUserId).bind()
+    }
+    
+    ArticlesPageView(
+      articles = articles,
+      articlesCount = totalCount
+    )
+  }
+}

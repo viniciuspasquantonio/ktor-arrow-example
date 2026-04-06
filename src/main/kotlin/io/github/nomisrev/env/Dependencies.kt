@@ -20,6 +20,8 @@ import io.github.nomisrev.bookmarks.ArticleAclImpl
 import io.github.nomisrev.bookmarks.BookmarkArticle
 import io.github.nomisrev.bookmarks.BookmarkArticleUseCase
 import io.github.nomisrev.bookmarks.BookmarkRepositoryImpl
+import io.github.nomisrev.bookmarks.ListArticlesBookmarkedBy
+import io.github.nomisrev.bookmarks.ListArticlesBookmarkedByUseCase
 import io.github.nomisrev.bookmarks.ListMyBookmarkedArticles
 import io.github.nomisrev.bookmarks.ListMyBookmarkedArticlesUseCase
 import io.github.nomisrev.bookmarks.UnbookmarkArticle
@@ -37,6 +39,7 @@ class Dependencies(
   val bookmarkArticle: BookmarkArticle,
   val unbookmarkArticle: UnbookmarkArticle,
   val listMyBookmarkedArticles: ListMyBookmarkedArticles,
+  val listArticlesBookmarkedBy: ListArticlesBookmarkedBy,
 )
 
 suspend fun ResourceScope.dependencies(env: Env): Dependencies {
@@ -60,6 +63,7 @@ suspend fun ResourceScope.dependencies(env: Env): Dependencies {
   val bookmarkArticleUseCase = BookmarkArticleUseCase(bookmarkRepository, articleAcl)
   val unbookmarkArticleUseCase = UnbookmarkArticleUseCase(bookmarkRepository, articleAcl)
   val listMyBookmarkedArticlesUseCase = ListMyBookmarkedArticlesUseCase(bookmarkRepository, articleAcl)
+  val listArticlesBookmarkedByUseCase = ListArticlesBookmarkedByUseCase(bookmarkRepository, articleAcl, userAcl)
 
   val checks =
     HealthCheckRegistry(Dispatchers.Default) { register(HikariConnectionsHealthCheck(hikari, 1)) }
@@ -74,5 +78,6 @@ suspend fun ResourceScope.dependencies(env: Env): Dependencies {
     bookmarkArticle = bookmarkArticleUseCase,
     unbookmarkArticle = unbookmarkArticleUseCase,
     listMyBookmarkedArticles = listMyBookmarkedArticlesUseCase,
+    listArticlesBookmarkedBy = listArticlesBookmarkedByUseCase,
   )
 }

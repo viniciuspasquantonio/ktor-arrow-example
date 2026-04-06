@@ -34,6 +34,7 @@ import kotlinx.serialization.encoding.Encoder
 import io.github.nomisrev.bookmarks.ArticleView
 import io.github.nomisrev.bookmarks.BookmarkArticle
 import io.github.nomisrev.bookmarks.UnbookmarkArticle
+import io.github.nomisrev.bookmarks.ListArticlesBookmarkedBy
 import io.github.nomisrev.bookmarks.ListMyBookmarkedArticles
 
 @Serializable data class ArticleWrapper<T : Any>(val article: T)
@@ -127,6 +128,14 @@ data class ArticlesResource(val parent: RootResource = RootResource) {
     val offsetParam: Int = 0
   )
 
+  @Resource("")
+  data class ListArticles(
+    val parent: ArticlesResource = ArticlesResource(),
+    val favorited: String? = null,
+    val limitParam: Int = 20,
+    val offsetParam: Int = 0
+  )
+
   @Resource("{slug}")
   data class Slug(val parent: ArticlesResource = ArticlesResource(), val slug: String) {
     @Resource("favorite") data class Favorite(val parent: Slug)
@@ -158,7 +167,8 @@ fun Route.articleRoutes(
   jwtService: JwtService,
   bookmarkArticle: BookmarkArticle,
   unbookmarkArticle: UnbookmarkArticle,
-  listMyBookmarkedArticles: ListMyBookmarkedArticles
+  listMyBookmarkedArticles: ListMyBookmarkedArticles,
+  listArticlesBookmarkedBy: ListArticlesBookmarkedBy
 ) {
   get<ArticleResource.Feed> { feed ->
     jwtAuth(jwtService) { (_, userId) ->
@@ -169,6 +179,27 @@ fun Route.articleRoutes(
           ArticleWrapper(articlesFeed)
         }
         .respond(HttpStatusCode.OK)
+    }
+  }
+
+  get<ArticlesResource.ListArticles> { req ->
+    optionalJwtAuth(jwtService) { context ->
+      val actorUserId = context?.userId?.serial
+      either {
+        if (req.favorited != null) {
+          val page = listArticlesBookmarkedBy
+            .invoke(req.favorited, actorUserId, req.limitParam, req.offsetParam)
+            .bind()
+            
+          MultipleArticlesResponse(
+            articles = page.articles.map { it.toArticleResponse() },
+            articlesCount = page.articlesCount
+          )
+        } else {
+          // Empty list for now when favorited is not passed, as we only need to implement favorited filter.
+          MultipleArticlesResponse(emptyList(), 0)
+        }
+      }.respond(HttpStatusCode.OK)
     }
   }
 
