@@ -32,3 +32,8 @@ FROM favorites
 WHERE user_id = :userId
 ORDER BY created_at DESC
 LIMIT :limit OFFSET :offset;
+
+countByUser:
+SELECT COUNT(article_id)
+FROM favorites
+WHERE user_id = :userId;
