@@ -12,7 +12,8 @@ fun Application.routes(deps: Dependencies) = routing {
     deps.articleService,
     deps.jwtService,
     deps.bookmarkArticle,
-    deps.unbookmarkArticle
+    deps.unbookmarkArticle,
+    deps.listMyBookmarkedArticles
   )
   commentRoutes(deps.userService, deps.articleService, deps.jwtService)
   profileRoutes(deps.userPersistence, deps.jwtService)

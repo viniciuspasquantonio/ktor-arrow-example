@@ -34,6 +34,7 @@ import kotlinx.serialization.encoding.Encoder
 import io.github.nomisrev.bookmarks.ArticleView
 import io.github.nomisrev.bookmarks.BookmarkArticle
 import io.github.nomisrev.bookmarks.UnbookmarkArticle
+import io.github.nomisrev.bookmarks.ListMyBookmarkedArticles
 
 @Serializable data class ArticleWrapper<T : Any>(val article: T)
 
@@ -119,6 +120,13 @@ data class ArticleResource(val parent: RootResource = RootResource) {
 
 @Resource("/articles")
 data class ArticlesResource(val parent: RootResource = RootResource) {
+  @Resource("bookmarked")
+  data class Bookmarked(
+    val parent: ArticlesResource = ArticlesResource(),
+    val limitParam: Int = 20,
+    val offsetParam: Int = 0
+  )
+
   @Resource("{slug}")
   data class Slug(val parent: ArticlesResource = ArticlesResource(), val slug: String) {
     @Resource("favorite") data class Favorite(val parent: Slug)
@@ -149,7 +157,8 @@ fun Route.articleRoutes(
   articleService: ArticleService,
   jwtService: JwtService,
   bookmarkArticle: BookmarkArticle,
-  unbookmarkArticle: UnbookmarkArticle
+  unbookmarkArticle: UnbookmarkArticle,
+  listMyBookmarkedArticles: ListMyBookmarkedArticles
 ) {
   get<ArticleResource.Feed> { feed ->
     jwtAuth(jwtService) { (_, userId) ->
@@ -158,6 +167,20 @@ fun Route.articleRoutes(
 
           val articlesFeed = articleService.getUserFeed(input = getFeed)
           ArticleWrapper(articlesFeed)
+        }
+        .respond(HttpStatusCode.OK)
+    }
+  }
+
+  get<ArticlesResource.Bookmarked> { req ->
+    jwtAuth(jwtService) { (_, userId) ->
+      listMyBookmarkedArticles
+        .invoke(userId.serial, req.limitParam, req.offsetParam)
+        .map { page -> 
+          MultipleArticlesResponse(
+            articles = page.articles.map { it.toArticleResponse() },
+            articlesCount = page.articlesCount
+          )
         }
         .respond(HttpStatusCode.OK)
     }
