@@ -285,10 +285,8 @@ fun Route.commentRoutes(
 
 fun Route.commentRoutes(articleService: ArticleService, jwtService: JwtService) {
   get<ArticlesResource.Comments> { slug ->
-    jwtAuth(jwtService) { (_, _) ->
-      val comments = articleService.getCommentsForSlug(Slug(slug.slug))
-      call.respond(MultipleCommentsResponse(comments))
-    }
+    val comments = articleService.getCommentsForSlug(Slug(slug.slug))
+    call.respond(MultipleCommentsResponse(comments))
   }
 
   delete<ArticlesResource.Comments.Id> { commentResource ->
