@@ -20,6 +20,11 @@ SELECT email, username, bio, image
 FROM users
 WHERE username = :username;
 
+selectIdByUsername:
+SELECT id
+FROM users
+WHERE username = :username;
+
 selectProfile:
 SELECT users.username, users.bio, users.image,
 CASE
