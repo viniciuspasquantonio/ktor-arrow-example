@@ -25,7 +25,7 @@ fun favouritePersistence(favouriteQueries: FavoritesQueries) =
       favouriteQueries.isFavorite(userId.serial, articleId.serial).executeAsOneOrNull() != null
 
     override suspend fun favoriteArticle(userId: UserId, articleId: ArticleId) {
-      favouriteQueries.insert(articleId.serial, userId.serial)
+      favouriteQueries.insert(articleId.serial, userId.serial, java.time.OffsetDateTime.now())
     }
 
     override suspend fun unfavoriteArticle(userId: UserId, articleId: ArticleId) {
