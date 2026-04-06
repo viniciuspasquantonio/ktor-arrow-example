@@ -47,3 +47,10 @@ data class NotArticleAuthor(val userId: Long, val slug: String) : ArticleError
 data class CommentNotFound(val commentId: Long) : ArticleError
 
 data class NotCommentAuthor(val userId: Long, val commentId: Long) : ArticleError
+
+sealed interface BookmarkError : DomainError
+
+// Adicionado por compatibilidade, embora seja idempotente
+data class BookmarkAlreadyExists(val userId: Long, val articleId: Long) : BookmarkError
+
+data class BookmarkNotFound(val userId: Long, val articleId: Long) : BookmarkError
