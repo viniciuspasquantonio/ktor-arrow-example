@@ -31,6 +31,10 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
+import io.github.nomisrev.bookmarks.ArticleView
+import io.github.nomisrev.bookmarks.BookmarkArticle
+import io.github.nomisrev.bookmarks.UnbookmarkArticle
+
 @Serializable data class ArticleWrapper<T : Any>(val article: T)
 
 @Serializable
@@ -126,7 +130,27 @@ data class ArticlesResource(val parent: RootResource = RootResource) {
   }
 }
 
-fun Route.articleRoutes(articleService: ArticleService, jwtService: JwtService) {
+fun ArticleView.toArticleResponse(): Article =
+  Article(
+    articleId = 0, // This is not strictly mapped in ArticleView, but we can set a dummy or update ArticleView
+    slug = slug,
+    title = title,
+    description = description,
+    body = body,
+    author = Profile(authorUsername, authorBio ?: "", authorImage, authorFollowing),
+    favorited = favorited,
+    favoritesCount = favoritesCount,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+    tagList = tagList,
+  )
+
+fun Route.articleRoutes(
+  articleService: ArticleService,
+  jwtService: JwtService,
+  bookmarkArticle: BookmarkArticle,
+  unbookmarkArticle: UnbookmarkArticle
+) {
   get<ArticleResource.Feed> { feed ->
     jwtAuth(jwtService) { (_, userId) ->
       either {
@@ -194,18 +218,18 @@ fun Route.articleRoutes(articleService: ArticleService, jwtService: JwtService) 
 
   post<ArticlesResource.Slug.Favorite> { favoriteResource ->
     jwtAuth(jwtService) { (_, userId) ->
-      articleService
-        .favoriteArticle(Slug(favoriteResource.parent.slug), userId)
-        .map { SingleArticleResponse(it) }
+      bookmarkArticle
+        .invoke(userId.serial, favoriteResource.parent.slug)
+        .map { SingleArticleResponse(it.toArticleResponse()) }
         .respond(HttpStatusCode.OK)
     }
   }
 
   delete<ArticlesResource.Slug.Favorite> { favoriteResource ->
     jwtAuth(jwtService) { (_, userId) ->
-      articleService
-        .unfavoriteArticle(Slug(favoriteResource.parent.slug), userId)
-        .map { SingleArticleResponse(it) }
+      unbookmarkArticle
+        .invoke(userId.serial, favoriteResource.parent.slug)
+        .map { SingleArticleResponse(it.toArticleResponse()) }
         .respond(HttpStatusCode.OK)
     }
   }

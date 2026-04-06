@@ -16,6 +16,15 @@ import io.github.nomisrev.service.articleService
 import io.github.nomisrev.service.jwtService
 import io.github.nomisrev.service.slugifyGenerator
 import io.github.nomisrev.service.userService
+import io.github.nomisrev.bookmarks.ArticleAclImpl
+import io.github.nomisrev.bookmarks.BookmarkArticle
+import io.github.nomisrev.bookmarks.BookmarkArticleUseCase
+import io.github.nomisrev.bookmarks.BookmarkRepositoryImpl
+import io.github.nomisrev.bookmarks.ListMyBookmarkedArticles
+import io.github.nomisrev.bookmarks.ListMyBookmarkedArticlesUseCase
+import io.github.nomisrev.bookmarks.UnbookmarkArticle
+import io.github.nomisrev.bookmarks.UnbookmarkArticleUseCase
+import io.github.nomisrev.bookmarks.UserAclImpl
 import kotlinx.coroutines.Dispatchers
 
 class Dependencies(
@@ -25,6 +34,9 @@ class Dependencies(
   val healthCheck: HealthCheckRegistry,
   val tagPersistence: TagPersistence,
   val userPersistence: UserPersistence,
+  val bookmarkArticle: BookmarkArticle,
+  val unbookmarkArticle: UnbookmarkArticle,
+  val listMyBookmarkedArticles: ListMyBookmarkedArticles,
 )
 
 suspend fun ResourceScope.dependencies(env: Env): Dependencies {
@@ -39,16 +51,28 @@ suspend fun ResourceScope.dependencies(env: Env): Dependencies {
   val slugGenerator = slugifyGenerator()
   val userService = userService(userRepo, jwtService)
 
+  val articleSvc = articleService(slugGenerator, articleRepo, userRepo, tagPersistence, favouritePersistence)
+
+  val bookmarkRepository = BookmarkRepositoryImpl(sqlDelight.favoritesQueries)
+  val articleAcl = ArticleAclImpl(articleRepo, articleSvc)
+  val userAcl = UserAclImpl(sqlDelight.usersQueries)
+
+  val bookmarkArticleUseCase = BookmarkArticleUseCase(bookmarkRepository, articleAcl)
+  val unbookmarkArticleUseCase = UnbookmarkArticleUseCase(bookmarkRepository, articleAcl)
+  val listMyBookmarkedArticlesUseCase = ListMyBookmarkedArticlesUseCase(bookmarkRepository, articleAcl)
+
   val checks =
     HealthCheckRegistry(Dispatchers.Default) { register(HikariConnectionsHealthCheck(hikari, 1)) }
 
   return Dependencies(
     userService = userService,
     jwtService = jwtService,
-    articleService =
-      articleService(slugGenerator, articleRepo, userRepo, tagPersistence, favouritePersistence),
+    articleService = articleSvc,
     healthCheck = checks,
     tagPersistence = tagPersistence,
     userPersistence = userRepo,
+    bookmarkArticle = bookmarkArticleUseCase,
+    unbookmarkArticle = unbookmarkArticleUseCase,
+    listMyBookmarkedArticles = listMyBookmarkedArticlesUseCase,
   )
 }
