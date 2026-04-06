@@ -7,6 +7,7 @@ import java.time.OffsetDateTime
 // Domain Models
 
 @JvmInline value class BookmarkUserId(val value: Long)
+
 @JvmInline value class BookmarkArticleId(val value: Long)
 
 // Shared View for ACL / Responses
@@ -26,10 +27,7 @@ data class ArticleView(
   val tagList: List<String>,
 )
 
-data class ArticlesPageView(
-  val articles: List<ArticleView>,
-  val articlesCount: Int,
-)
+data class ArticlesPageView(val articles: List<ArticleView>, val articlesCount: Int)
 
 // Inbound Ports (Use Cases)
 
@@ -42,7 +40,11 @@ interface UnbookmarkArticle {
 }
 
 interface ListMyBookmarkedArticles {
-  suspend fun invoke(actorUserId: Long, limit: Int, offset: Int): Either<DomainError, ArticlesPageView>
+  suspend fun invoke(
+    actorUserId: Long,
+    limit: Int,
+    offset: Int,
+  ): Either<DomainError, ArticlesPageView>
 }
 
 interface ListArticlesBookmarkedBy {
@@ -50,7 +52,7 @@ interface ListArticlesBookmarkedBy {
     username: String,
     actorUserId: Long?,
     limit: Int,
-    offset: Int
+    offset: Int,
   ): Either<DomainError, ArticlesPageView>
 }
 
@@ -58,16 +60,30 @@ interface ListArticlesBookmarkedBy {
 
 interface BookmarkRepository {
   suspend fun exists(userId: BookmarkUserId, articleId: BookmarkArticleId): Boolean
+
   suspend fun add(userId: BookmarkUserId, articleId: BookmarkArticleId): Unit
+
   suspend fun remove(userId: BookmarkUserId, articleId: BookmarkArticleId): Unit
+
   suspend fun countByArticle(articleId: BookmarkArticleId): Long
-  suspend fun listArticleIdsByUser(userId: BookmarkUserId, limit: Int, offset: Int): List<BookmarkArticleId>
+
+  suspend fun listArticleIdsByUser(
+    userId: BookmarkUserId,
+    limit: Int,
+    offset: Int,
+  ): List<BookmarkArticleId>
+
   suspend fun countByUser(userId: BookmarkUserId): Long
 }
 
 interface ArticleAcl {
   suspend fun articleIdBySlug(slug: String): Either<DomainError, BookmarkArticleId>
-  suspend fun articleViewBySlugForActor(slug: String, actorUserId: Long?): Either<DomainError, ArticleView>
+
+  suspend fun articleViewBySlugForActor(
+    slug: String,
+    actorUserId: Long?,
+  ): Either<DomainError, ArticleView>
+
   suspend fun listArticlesByIds(
     articleIds: List<BookmarkArticleId>,
     actorUserId: Long?,

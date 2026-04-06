@@ -3,9 +3,7 @@ package io.github.nomisrev.bookmarks
 import io.github.nomisrev.sqldelight.FavoritesQueries
 import java.time.OffsetDateTime
 
-class BookmarkRepositoryImpl(
-  private val favoritesQueries: FavoritesQueries
-) : BookmarkRepository {
+class BookmarkRepositoryImpl(private val favoritesQueries: FavoritesQueries) : BookmarkRepository {
 
   override suspend fun exists(userId: BookmarkUserId, articleId: BookmarkArticleId): Boolean =
     favoritesQueries.isFavorite(userId.value, articleId.value).executeAsOneOrNull() != null
@@ -14,15 +12,12 @@ class BookmarkRepositoryImpl(
     favoritesQueries.insert(
       articleId = articleId.value,
       userId = userId.value,
-      createdAt = OffsetDateTime.now()
+      createdAt = OffsetDateTime.now(),
     )
   }
 
   override suspend fun remove(userId: BookmarkUserId, articleId: BookmarkArticleId) {
-    favoritesQueries.delete(
-      articleId = articleId.value,
-      userId = userId.value
-    )
+    favoritesQueries.delete(articleId = articleId.value, userId = userId.value)
   }
 
   override suspend fun countByArticle(articleId: BookmarkArticleId): Long =
@@ -31,7 +26,7 @@ class BookmarkRepositoryImpl(
   override suspend fun listArticleIdsByUser(
     userId: BookmarkUserId,
     limit: Int,
-    offset: Int
+    offset: Int,
   ): List<BookmarkArticleId> =
     favoritesQueries
       .selectArticleIdsByUserId(userId.value, limit.toLong(), offset.toLong())

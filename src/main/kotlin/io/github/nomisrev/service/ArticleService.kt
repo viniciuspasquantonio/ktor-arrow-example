@@ -165,16 +165,21 @@ fun articleService(
       article(article, false)
     }
 
-    override suspend fun getArticlesByIds(ids: List<ArticleId>, actorUserId: UserId?): List<Article> {
+    override suspend fun getArticlesByIds(
+      ids: List<ArticleId>,
+      actorUserId: UserId?,
+    ): List<Article> {
       val articles = articlePersistence.findArticlesByIds(ids)
       // Since Raise requires an Either block, we can just wrap each one and filter successful ones
       return articles.mapNotNull { article ->
         either {
-          val favorited = if (actorUserId != null) {
-            favouritePersistence.isFavorite(actorUserId, article.id)
-          } else false
-          article(article, favorited)
-        }.getOrNull()
+            val favorited =
+              if (actorUserId != null) {
+                favouritePersistence.isFavorite(actorUserId, article.id)
+              } else false
+            article(article, favorited)
+          }
+          .getOrNull()
       }
     }
 

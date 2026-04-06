@@ -3,6 +3,17 @@ package io.github.nomisrev.env
 import arrow.fx.coroutines.ResourceScope
 import com.sksamuel.cohort.HealthCheckRegistry
 import com.sksamuel.cohort.hikari.HikariConnectionsHealthCheck
+import io.github.nomisrev.bookmarks.ArticleAclImpl
+import io.github.nomisrev.bookmarks.BookmarkArticle
+import io.github.nomisrev.bookmarks.BookmarkArticleUseCase
+import io.github.nomisrev.bookmarks.BookmarkRepositoryImpl
+import io.github.nomisrev.bookmarks.ListArticlesBookmarkedBy
+import io.github.nomisrev.bookmarks.ListArticlesBookmarkedByUseCase
+import io.github.nomisrev.bookmarks.ListMyBookmarkedArticles
+import io.github.nomisrev.bookmarks.ListMyBookmarkedArticlesUseCase
+import io.github.nomisrev.bookmarks.UnbookmarkArticle
+import io.github.nomisrev.bookmarks.UnbookmarkArticleUseCase
+import io.github.nomisrev.bookmarks.UserAclImpl
 import io.github.nomisrev.repo.TagPersistence
 import io.github.nomisrev.repo.UserPersistence
 import io.github.nomisrev.repo.articleRepo
@@ -16,17 +27,6 @@ import io.github.nomisrev.service.articleService
 import io.github.nomisrev.service.jwtService
 import io.github.nomisrev.service.slugifyGenerator
 import io.github.nomisrev.service.userService
-import io.github.nomisrev.bookmarks.ArticleAclImpl
-import io.github.nomisrev.bookmarks.BookmarkArticle
-import io.github.nomisrev.bookmarks.BookmarkArticleUseCase
-import io.github.nomisrev.bookmarks.BookmarkRepositoryImpl
-import io.github.nomisrev.bookmarks.ListArticlesBookmarkedBy
-import io.github.nomisrev.bookmarks.ListArticlesBookmarkedByUseCase
-import io.github.nomisrev.bookmarks.ListMyBookmarkedArticles
-import io.github.nomisrev.bookmarks.ListMyBookmarkedArticlesUseCase
-import io.github.nomisrev.bookmarks.UnbookmarkArticle
-import io.github.nomisrev.bookmarks.UnbookmarkArticleUseCase
-import io.github.nomisrev.bookmarks.UserAclImpl
 import kotlinx.coroutines.Dispatchers
 
 class Dependencies(
@@ -54,7 +54,8 @@ suspend fun ResourceScope.dependencies(env: Env): Dependencies {
   val slugGenerator = slugifyGenerator()
   val userService = userService(userRepo, jwtService)
 
-  val articleSvc = articleService(slugGenerator, articleRepo, userRepo, tagPersistence, favouritePersistence)
+  val articleSvc =
+    articleService(slugGenerator, articleRepo, userRepo, tagPersistence, favouritePersistence)
 
   val bookmarkRepository = BookmarkRepositoryImpl(sqlDelight.favoritesQueries)
   val articleAcl = ArticleAclImpl(articleRepo, articleSvc)
@@ -62,8 +63,10 @@ suspend fun ResourceScope.dependencies(env: Env): Dependencies {
 
   val bookmarkArticleUseCase = BookmarkArticleUseCase(bookmarkRepository, articleAcl)
   val unbookmarkArticleUseCase = UnbookmarkArticleUseCase(bookmarkRepository, articleAcl)
-  val listMyBookmarkedArticlesUseCase = ListMyBookmarkedArticlesUseCase(bookmarkRepository, articleAcl)
-  val listArticlesBookmarkedByUseCase = ListArticlesBookmarkedByUseCase(bookmarkRepository, articleAcl, userAcl)
+  val listMyBookmarkedArticlesUseCase =
+    ListMyBookmarkedArticlesUseCase(bookmarkRepository, articleAcl)
+  val listArticlesBookmarkedByUseCase =
+    ListArticlesBookmarkedByUseCase(bookmarkRepository, articleAcl, userAcl)
 
   val checks =
     HealthCheckRegistry(Dispatchers.Default) { register(HikariConnectionsHealthCheck(hikari, 1)) }
