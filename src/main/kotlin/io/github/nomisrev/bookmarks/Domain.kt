@@ -45,6 +45,15 @@ interface ListMyBookmarkedArticles {
   suspend fun invoke(actorUserId: Long, limit: Int, offset: Int): Either<DomainError, ArticlesPageView>
 }
 
+interface ListArticlesBookmarkedBy {
+  suspend fun invoke(
+    username: String,
+    actorUserId: Long?,
+    limit: Int,
+    offset: Int
+  ): Either<DomainError, ArticlesPageView>
+}
+
 // Outbound Ports
 
 interface BookmarkRepository {
