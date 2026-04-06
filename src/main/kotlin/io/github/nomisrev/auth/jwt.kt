@@ -33,7 +33,7 @@ suspend inline fun RoutingContext.optionalJwtAuth(
     jwtService
       .verifyJwtToken(JwtToken(token))
       .fold(
-        { error -> call.respond(error) },
+        { _ -> body(this, null) },
         { userId -> body(this, JwtContext(JwtToken(token), userId)) },
       )
   } ?: body(this, null)

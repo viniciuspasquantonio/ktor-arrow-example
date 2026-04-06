@@ -56,6 +56,15 @@ class ArticleRouteSpec :
       }
     }
 
+    "Cannot get feed when not authenticated" {
+      withServer {
+        val response =
+          get(ArticleResource.Feed(offsetParam = 0)) { contentType(ContentType.Application.Json) }
+
+        assert(response.status == HttpStatusCode.Unauthorized)
+      }
+    }
+
     "ٰValidate correct both offset and limit value" {
       withServer {
         val response =

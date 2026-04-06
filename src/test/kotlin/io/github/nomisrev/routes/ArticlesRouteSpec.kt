@@ -81,6 +81,23 @@ class ArticlesRouteSpec :
       }
     }
 
+    "Can get an article by slug with invalid token (ignores token)" {
+      withServer { dependencies ->
+        val article =
+          dependencies.articleService
+            .createArticle(
+              CreateArticle(userId, validTitle, validDescription, validBody, validTags)
+            )
+            .shouldBeRight()
+
+        val response =
+          get(ArticlesResource.Slug(slug = article.slug)) { bearerAuth("invalid-token-123") }
+
+        assert(response.status == HttpStatusCode.OK)
+        assert(response.body<SingleArticleResponse>().article == article)
+      }
+    }
+
     "can get comments for an article by slug when authenticated" {
       withServer { dependencies ->
         val article =
@@ -98,7 +115,7 @@ class ArticlesRouteSpec :
       }
     }
 
-    "can not get comments for an article when not authenticated" {
+    "can get comments for an article when not authenticated" {
       withServer { dependencies ->
         val article =
           dependencies.articleService
@@ -109,7 +126,7 @@ class ArticlesRouteSpec :
 
         val response = get(ArticlesResource.Comments(slug = article.slug))
 
-        assert(response.status == HttpStatusCode.Unauthorized)
+        assert(response.status == HttpStatusCode.OK)
       }
     }
 
