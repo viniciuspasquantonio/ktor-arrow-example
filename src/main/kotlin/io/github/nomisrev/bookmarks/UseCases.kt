@@ -18,7 +18,11 @@ class BookmarkArticleUseCase(
         bookmarkRepository.add(bookmarkUserId, articleId)
       }
 
-      articleAcl.articleViewBySlugForActor(slug, actorUserId).bind()
+      val view = articleAcl.articleViewBySlugForActor(slug, actorUserId).bind()
+
+      // Override favorited state and count locally since we just added it
+      val newCount = bookmarkRepository.countByArticle(articleId)
+      view.copy(favorited = true, favoritesCount = newCount)
     }
 }
 
@@ -36,7 +40,11 @@ class UnbookmarkArticleUseCase(
         bookmarkRepository.remove(bookmarkUserId, articleId)
       }
 
-      articleAcl.articleViewBySlugForActor(slug, actorUserId).bind()
+      val view = articleAcl.articleViewBySlugForActor(slug, actorUserId).bind()
+
+      // Override favorited state and count locally since we just removed it
+      val newCount = bookmarkRepository.countByArticle(articleId)
+      view.copy(favorited = false, favoritesCount = newCount)
     }
 }
 
