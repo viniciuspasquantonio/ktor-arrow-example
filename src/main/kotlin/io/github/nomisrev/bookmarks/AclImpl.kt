@@ -29,10 +29,6 @@ class ArticleAclImpl(
     actorUserId: Long?,
   ): Either<DomainError, ArticleView> = either {
     // We can use articleService.getArticleBySlug, then map to ArticleView.
-    // However, ArticleService.getArticleBySlug currently returns favorited=false hardcoded.
-    // If actorUserId is not null, we should probably check if it's favorited.
-    // For now, since the PRD wants us to return the view, we just use the service.
-    // Wait, the routes themselves already map Article to SingleArticleResponse.
     val article = articleService.getArticleBySlug(Slug(slug)).bind()
     mapToView(article)
   }
