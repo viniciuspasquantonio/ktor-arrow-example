@@ -38,6 +38,8 @@ interface ArticlePersistence {
   // TODO create proper domain for Articles
   suspend fun findArticleBySlug(slug: Slug): Either<ArticleBySlugNotFound, Articles>
 
+  suspend fun findArticlesByIds(ids: List<ArticleId>): List<Articles>
+
   // TODO create proper domain for Articles
   /** Update an article by slug */
   suspend fun updateArticle(
@@ -133,6 +135,10 @@ fun articleRepo(articles: ArticlesQueries, comments: CommentsQueries, tagsQuerie
         val article = articles.selectBySlug(slug.value).executeAsOneOrNull()
         ensureNotNull(article) { ArticleBySlugNotFound(slug.value) }
       }
+
+    override suspend fun findArticlesByIds(ids: List<ArticleId>): List<Articles> =
+      if (ids.isEmpty()) emptyList()
+      else articles.selectArticlesByIds(ids).executeAsList()
 
     override suspend fun updateArticle(
       slug: Slug,

@@ -53,6 +53,9 @@ interface ArticleService {
   /** Get article by Slug */
   suspend fun getArticleBySlug(slug: Slug): Either<DomainError, Article>
 
+  /** Get articles by Ids */
+  suspend fun getArticlesByIds(ids: List<ArticleId>, actorUserId: UserId?): List<Article>
+
   /** Update an article and return the updated Article */
   suspend fun updateArticle(input: UpdateArticleInput): Either<DomainError, Article>
 
@@ -160,6 +163,19 @@ fun articleService(
       val article = articlePersistence.findArticleBySlug(slug).bind()
       // TODO: optional auth route check if user favorited
       article(article, false)
+    }
+
+    override suspend fun getArticlesByIds(ids: List<ArticleId>, actorUserId: UserId?): List<Article> {
+      val articles = articlePersistence.findArticlesByIds(ids)
+      // Since Raise requires an Either block, we can just wrap each one and filter successful ones
+      return articles.mapNotNull { article ->
+        either {
+          val favorited = if (actorUserId != null) {
+            favouritePersistence.isFavorite(actorUserId, article.id)
+          } else false
+          article(article, favorited)
+        }.getOrNull()
+      }
     }
 
     override suspend fun insertCommentForArticleSlug(

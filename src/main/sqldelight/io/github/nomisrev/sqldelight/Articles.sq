@@ -69,3 +69,8 @@ SELECT EXISTS(
 delete:
 DELETE FROM articles
 WHERE id = :articleId;
+
+selectArticlesByIds:
+SELECT id, slug, title, description, body, author_id, createdAt, updatedAt
+FROM articles
+WHERE id IN :ids;
