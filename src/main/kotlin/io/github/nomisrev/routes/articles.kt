@@ -5,6 +5,11 @@ import arrow.core.raise.either
 import io.github.nomisrev.IncorrectInput
 import io.github.nomisrev.auth.jwtAuth
 import io.github.nomisrev.auth.optionalJwtAuth
+import io.github.nomisrev.bookmarks.ArticleView
+import io.github.nomisrev.bookmarks.BookmarkArticle
+import io.github.nomisrev.bookmarks.ListArticlesBookmarkedBy
+import io.github.nomisrev.bookmarks.ListMyBookmarkedArticles
+import io.github.nomisrev.bookmarks.UnbookmarkArticle
 import io.github.nomisrev.repo.UserId
 import io.github.nomisrev.service.ArticleService
 import io.github.nomisrev.service.CreateArticle
@@ -30,12 +35,6 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-
-import io.github.nomisrev.bookmarks.ArticleView
-import io.github.nomisrev.bookmarks.BookmarkArticle
-import io.github.nomisrev.bookmarks.UnbookmarkArticle
-import io.github.nomisrev.bookmarks.ListArticlesBookmarkedBy
-import io.github.nomisrev.bookmarks.ListMyBookmarkedArticles
 
 @Serializable data class ArticleWrapper<T : Any>(val article: T)
 
@@ -125,7 +124,7 @@ data class ArticlesResource(val parent: RootResource = RootResource) {
   data class Bookmarked(
     val parent: ArticlesResource = ArticlesResource(),
     val limitParam: Int = 20,
-    val offsetParam: Int = 0
+    val offsetParam: Int = 0,
   )
 
   @Resource("")
@@ -133,7 +132,7 @@ data class ArticlesResource(val parent: RootResource = RootResource) {
     val parent: ArticlesResource = ArticlesResource(),
     val favorited: String? = null,
     val limitParam: Int = 20,
-    val offsetParam: Int = 0
+    val offsetParam: Int = 0,
   )
 
   @Resource("{slug}")
@@ -149,7 +148,8 @@ data class ArticlesResource(val parent: RootResource = RootResource) {
 
 fun ArticleView.toArticleResponse(): Article =
   Article(
-    articleId = 0, // This is not strictly mapped in ArticleView, but we can set a dummy or update ArticleView
+    articleId =
+      0, // This is not strictly mapped in ArticleView, but we can set a dummy or update ArticleView
     slug = slug,
     title = title,
     description = description,
@@ -168,7 +168,7 @@ fun Route.articleRoutes(
   bookmarkArticle: BookmarkArticle,
   unbookmarkArticle: UnbookmarkArticle,
   listMyBookmarkedArticles: ListMyBookmarkedArticles,
-  listArticlesBookmarkedBy: ListArticlesBookmarkedBy
+  listArticlesBookmarkedBy: ListArticlesBookmarkedBy,
 ) {
   get<ArticleResource.Feed> { feed ->
     jwtAuth(jwtService) { (_, userId) ->
@@ -186,20 +186,23 @@ fun Route.articleRoutes(
     optionalJwtAuth(jwtService) { context ->
       val actorUserId = context?.userId?.serial
       either {
-        if (req.favorited != null) {
-          val page = listArticlesBookmarkedBy
-            .invoke(req.favorited, actorUserId, req.limitParam, req.offsetParam)
-            .bind()
-            
-          MultipleArticlesResponse(
-            articles = page.articles.map { it.toArticleResponse() },
-            articlesCount = page.articlesCount
-          )
-        } else {
-          // Empty list for now when favorited is not passed, as we only need to implement favorited filter.
-          MultipleArticlesResponse(emptyList(), 0)
+          if (req.favorited != null) {
+            val page =
+              listArticlesBookmarkedBy
+                .invoke(req.favorited, actorUserId, req.limitParam, req.offsetParam)
+                .bind()
+
+            MultipleArticlesResponse(
+              articles = page.articles.map { it.toArticleResponse() },
+              articlesCount = page.articlesCount,
+            )
+          } else {
+            // Empty list for now when favorited is not passed, as we only need to implement
+            // favorited filter.
+            MultipleArticlesResponse(emptyList(), 0)
+          }
         }
-      }.respond(HttpStatusCode.OK)
+        .respond(HttpStatusCode.OK)
     }
   }
 
@@ -207,10 +210,10 @@ fun Route.articleRoutes(
     jwtAuth(jwtService) { (_, userId) ->
       listMyBookmarkedArticles
         .invoke(userId.serial, req.limitParam, req.offsetParam)
-        .map { page -> 
+        .map { page ->
           MultipleArticlesResponse(
             articles = page.articles.map { it.toArticleResponse() },
-            articlesCount = page.articlesCount
+            articlesCount = page.articlesCount,
           )
         }
         .respond(HttpStatusCode.OK)

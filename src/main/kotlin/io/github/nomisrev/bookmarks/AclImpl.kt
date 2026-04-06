@@ -8,7 +8,6 @@ import io.github.nomisrev.UserNotFound
 import io.github.nomisrev.repo.ArticleId
 import io.github.nomisrev.repo.ArticlePersistence
 import io.github.nomisrev.repo.UserId
-import io.github.nomisrev.repo.UserPersistence
 import io.github.nomisrev.routes.Article
 import io.github.nomisrev.service.ArticleService
 import io.github.nomisrev.service.Slug
@@ -27,7 +26,7 @@ class ArticleAclImpl(
 
   override suspend fun articleViewBySlugForActor(
     slug: String,
-    actorUserId: Long?
+    actorUserId: Long?,
   ): Either<DomainError, ArticleView> = either {
     // We can use articleService.getArticleBySlug, then map to ArticleView.
     // However, ArticleService.getArticleBySlug currently returns favorited=false hardcoded.
@@ -40,16 +39,13 @@ class ArticleAclImpl(
 
   override suspend fun listArticlesByIds(
     articleIds: List<BookmarkArticleId>,
-    actorUserId: Long?
+    actorUserId: Long?,
   ): Either<DomainError, List<ArticleView>> = either {
     if (articleIds.isEmpty()) return@either emptyList()
-    
+
     val userId = actorUserId?.let { UserId(it) }
-    val articles = articleService.getArticlesByIds(
-      articleIds.map { ArticleId(it.value) },
-      userId
-    )
-    
+    val articles = articleService.getArticlesByIds(articleIds.map { ArticleId(it.value) }, userId)
+
     // To preserve order of the provided articleIds
     val articleMap = articles.associateBy { it.articleId }
     articleIds.mapNotNull { articleMap[it.value] }.map { mapToView(it) }
@@ -73,9 +69,7 @@ class ArticleAclImpl(
     )
 }
 
-class UserAclImpl(
-  private val usersQueries: UsersQueries
-) : UserAcl {
+class UserAclImpl(private val usersQueries: UsersQueries) : UserAcl {
   override suspend fun userIdByUsername(username: String): Either<DomainError, BookmarkUserId> =
     either {
       val userId = usersQueries.selectIdByUsername(username).executeAsOneOrNull()

@@ -137,8 +137,7 @@ fun articleRepo(articles: ArticlesQueries, comments: CommentsQueries, tagsQuerie
       }
 
     override suspend fun findArticlesByIds(ids: List<ArticleId>): List<Articles> =
-      if (ids.isEmpty()) emptyList()
-      else articles.selectArticlesByIds(ids).executeAsList()
+      if (ids.isEmpty()) emptyList() else articles.selectArticlesByIds(ids).executeAsList()
 
     override suspend fun updateArticle(
       slug: Slug,

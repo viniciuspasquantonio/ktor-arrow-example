@@ -2,6 +2,8 @@ package io.github.nomisrev.routes
 
 import arrow.core.Either
 import io.github.nomisrev.ArticleBySlugNotFound
+import io.github.nomisrev.BookmarkAlreadyExists
+import io.github.nomisrev.BookmarkNotFound
 import io.github.nomisrev.CannotGenerateSlug
 import io.github.nomisrev.CommentNotFound
 import io.github.nomisrev.DomainError
@@ -55,6 +57,8 @@ suspend fun RoutingContext.respond(error: DomainError): Unit =
     is NotArticleAuthor -> unprocessable("User is not the author of the article")
     is CommentNotFound -> unprocessable("Comment with ID ${error.commentId} not found")
     is NotCommentAuthor -> unprocessable("User is not the author of the comment")
+    is BookmarkAlreadyExists -> unprocessable("Bookmark already exists")
+    is BookmarkNotFound -> unprocessable("Bookmark not found")
   }
 
 private suspend inline fun RoutingContext.unprocessable(error: String): Unit =
