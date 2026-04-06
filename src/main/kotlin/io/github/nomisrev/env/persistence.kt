@@ -35,6 +35,7 @@ suspend fun ResourceScope.sqlDelight(dataSource: DataSource): SqlDelight {
     driver,
     Articles.Adapter(articleIdAdapter, userIdAdapter, offsetDateTimeAdapter, offsetDateTimeAdapter),
     Comments.Adapter(offsetDateTimeAdapter, offsetDateTimeAdapter),
+    io.github.nomisrev.sqldelight.Favorites.Adapter(offsetDateTimeAdapter),
     Tags.Adapter(articleIdAdapter),
     Users.Adapter(userIdAdapter),
   )

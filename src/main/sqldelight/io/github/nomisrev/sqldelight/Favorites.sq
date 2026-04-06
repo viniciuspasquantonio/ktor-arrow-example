@@ -1,8 +1,11 @@
 CREATE TABLE IF NOT EXISTS favorites(
     article_id BIGINT REFERENCES articles(id) ON DELETE CASCADE NOT NULL,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    created_at TEXT AS java.time.OffsetDateTime NOT NULL,
     PRIMARY KEY (article_id, user_id)
 );
+
+CREATE INDEX IF NOT EXISTS favorites_user_id_created_at_idx ON favorites(user_id, created_at DESC);
 
 favoriteCount:
 SELECT COUNT(user_id)
@@ -10,8 +13,9 @@ FROM favorites
 WHERE article_id = :articleId;
 
 insert:
-INSERT INTO favorites(article_id, user_id)
-VALUES (:articleId, :userId);
+INSERT INTO favorites(article_id, user_id, created_at)
+VALUES (:articleId, :userId, :createdAt)
+ON CONFLICT (article_id, user_id) DO NOTHING;
 
 delete:
 DELETE FROM favorites
@@ -21,3 +25,10 @@ isFavorite:
 SELECT article_id
 FROM favorites
 WHERE user_id = :userId AND article_id = :articleId;
+
+selectArticleIdsByUserId:
+SELECT article_id
+FROM favorites
+WHERE user_id = :userId
+ORDER BY created_at DESC
+LIMIT :limit OFFSET :offset;
