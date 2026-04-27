@@ -170,3 +170,6 @@ gradle-wrapper.jar
 
 kotlin-js-store
 *.hprof
+
+# Local git worktrees
+.worktrees/
